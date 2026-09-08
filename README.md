@@ -76,8 +76,8 @@ bash compile.sh                     # 8 个 axmodel（需 Pulsar2 Docker）
 ## C++ 推理
 
 `cpp/` 提供与 Python 对齐的 C++ 实现（板端实测 C++ vs Python DER 差 0.56%，
-RTF 0.12）。交叉编译工具链下载见 `cpp/download_toolchains.sh`（gcc-arm-9.2 +
-AX650 BSP SDK），或参考 `cpp/README.md`。
+RTF 0.09，OMP 8 线程）。交叉编译工具链下载见 `cpp/download_toolchains.sh`
+（gcc-arm-9.2 + AX650 BSP SDK），或参考 `cpp/README.md`。
 
 ## 模型下载
 

@@ -27,6 +27,7 @@ void DiarEngine::SegmentWindow(const float* win, uint8_t* masks) {
 
     constexpr int N_COLS = 15975, KERNEL = 251;
     if (buf_unfold.empty()) buf_unfold.resize(N_COLS * KERNEL);
+    #pragma omp parallel for schedule(static)
     for (int j = 0; j < N_COLS; ++j) {
         float* row = buf_unfold.data() + j * KERNEL;
         const float* src = win + 10 * j;
@@ -39,6 +40,7 @@ void DiarEngine::SegmentWindow(const float* win, uint8_t* masks) {
     seg_a.RunSync();
     seg_a.GetOutputByName("pool0", buf_a.data());
     inst_norm(buf_a.data(), 80, 5325, P.n0w, P.n0b, buf_a.data());
+    #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < buf_a.size(); ++i) buf_a[i] = leaky(buf_a[i]);
 
     if (buf_b1.empty()) buf_b1.resize(60 * 1773);
@@ -46,6 +48,7 @@ void DiarEngine::SegmentWindow(const float* win, uint8_t* masks) {
     seg_b1.RunSync();
     seg_b1.GetOutputByName("pool1", buf_b1.data());
     inst_norm(buf_b1.data(), 60, 1773, P.n1w, P.n1b, buf_b1.data());
+    #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < buf_b1.size(); ++i) buf_b1[i] = leaky(buf_b1[i]);
 
     if (buf_b2.empty()) buf_b2.resize(60 * 589);
@@ -53,6 +56,7 @@ void DiarEngine::SegmentWindow(const float* win, uint8_t* masks) {
     seg_b2.RunSync();
     seg_b2.GetOutputByName("pool2", buf_b2.data());
     inst_norm(buf_b2.data(), 60, 589, P.n2w, P.n2b, buf_b2.data());
+    #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < buf_b2.size(); ++i) buf_b2[i] = leaky(buf_b2[i]);
 
     // ---- LSTM: 4 layers, 64-step cells, fwd+bwd per call ----
