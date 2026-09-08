@@ -103,7 +103,8 @@ class CellLstm:
                 xc[:len(chunk), :in_dim] = chunk
                 xc[:len(chunk), in_dim:] = bchunk
                 out = self.cells[l].run({'x': xc, 'h0': h, 'c0': c})
-                y, h, c = out[list(out)[0]], out[list(out)[1]], out[list(out)[2]]
+                y = np.concatenate([out['y0'], out['y1']], axis=0)
+                h, c = out['hN'], out['cN']
                 ys.append(y[:len(chunk)])
             yall = np.concatenate(ys, axis=0)
             x = np.concatenate([yall[:, :128], yall[:, 128:][::-1]], axis=1)

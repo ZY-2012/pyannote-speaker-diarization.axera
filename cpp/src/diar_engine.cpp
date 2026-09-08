@@ -92,7 +92,8 @@ void DiarEngine::SegmentWindow(const float* win, uint8_t* masks) {
             cells[l].SetInputByName("h0", h.data());
             cells[l].SetInputByName("c0", c.data());
             cells[l].RunSync();
-            cells[l].GetOutputByName("y", y_tmp.data());
+            cells[l].GetOutputByName("y0", y_tmp.data());
+            cells[l].GetOutputByName("y1", y_tmp.data() + (CELL_CHUNK / 2) * 256);
             memcpy(y.data() + (size_t)s * CELL_CHUNK * 256, y_tmp.data(),
                    (size_t)len * 256 * sizeof(float));
             cells[l].GetOutputByName("hN", h.data());
