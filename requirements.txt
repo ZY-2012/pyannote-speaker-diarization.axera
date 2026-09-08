@@ -1,0 +1,11 @@
+# 板端推理（AX650N）
+numpy
+scipy
+scikit-learn
+soundfile
+axengine
+
+# 模型转换（可选）
+torch
+onnxruntime
+pyannote.audio

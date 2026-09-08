@@ -1,0 +1,39 @@
+# models
+models/
+*.axmodel
+*.onnx
+*.pt
+*.pth
+*.bin
+*.npz
+*.ckpt
+
+# builds
+build/
+build_*/
+install/
+*.o
+*.a
+*.so
+dump_features
+
+# python
+__pycache__/
+*.pyc
+
+# conversion outputs
+model_convert/export/
+model_convert/calib_data/
+model_convert/compile/
+model_convert/iso/
+model_convert/sim_*/
+model_convert/host_check/
+
+# misc
+*.log
+output.rttm
+cpp_out.rttm
+*.rttm
+.msc
+.mv
+._____temp

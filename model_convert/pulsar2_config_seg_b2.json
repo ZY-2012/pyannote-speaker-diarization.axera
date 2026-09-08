@@ -1,0 +1,47 @@
+{
+  "input": "/workspace/export/segmentation_convs2.onnx",
+  "output_dir": "/workspace/compile",
+  "output_name": "segmentation_convs2.axmodel",
+  "work_dir": "/workspace/compile/work_seg_b2",
+  "model_type": "ONNX",
+  "target_hardware": "AX650",
+  "npu_mode": "NPU3",
+  "input_shapes": "x:1x60x1773",
+  "onnx_opt": {
+    "disable_onnx_optimization": false,
+    "enable_onnxsim": true,
+    "model_check": true
+  },
+  "quant": {
+    "calibration_method": "MinMax",
+    "input_configs": [
+      {
+        "tensor_name": "x",
+        "calibration_dataset": "/workspace/calib_data/x_b2.tar.gz",
+        "calibration_format": "Numpy",
+        "calibration_size": 64,
+        "calibration_mean": [],
+        "calibration_std": []
+      }
+    ],
+    "layer_configs": [
+      {
+        "start_tensor_names": [
+          "DEFAULT"
+        ],
+        "end_tensor_names": [
+          "DEFAULT"
+        ],
+        "data_type": "U16",
+        "weight_data_type": "S8",
+        "output_data_type": "U16"
+      }
+    ],
+    "highest_mix_precision": false,
+    "precision_analysis": true,
+    "precision_analysis_method": "EndToEnd"
+  },
+  "compiler": {
+    "check": 0
+  }
+}
