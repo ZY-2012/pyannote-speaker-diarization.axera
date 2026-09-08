@@ -179,6 +179,8 @@ void DiarEngine::Embeddings(const WavData& wav, const std::vector<uint8_t>& seg_
         int avail = std::min(WINDOW_SAMPLES, (int)wav.samples.size() - s0);
         if (avail > 0) memcpy(crop.data(), wav.samples.data() + s0, avail * sizeof(float));
         bool fbank_done = false;
+        // the conv stack only depends on the crop: run it at most once per window
+        bool conv_done = false;
         for (int spk = 0; spk < 3; ++spk) {
             const uint8_t* base = seg_data.data() + (size_t)c * 589 * 3;
             double msum = 0, csum = 0;
@@ -205,11 +207,15 @@ void DiarEngine::Embeddings(const WavData& wav, const std::vector<uint8_t>& seg_
                 kaldi_fbank(P, crop.data(), WINDOW_SAMPLES, buf_fbank.data());
                 fbank_done = true;
             }
-            emb.SetInputByName("fbank", buf_fbank.data());
-            emb.RunSync();
-            emb.GetOutputByName("frames", frames.data());
-            for (int f = 0; f < 2560; ++f)
-                memcpy(x.data() + f * 125, frames.data() + f * 125, 125 * sizeof(float));
+            if (!conv_done) {
+                emb.SetInputByName("fbank", buf_fbank.data());
+                emb.RunSync();
+                emb.GetOutputByName("frames", frames.data());
+                for (int f = 0; f < 2560; ++f)
+                    memcpy(x.data() + f * 125, frames.data() + f * 125,
+                           125 * sizeof(float));
+                conv_done = true;
+            }
             for (int i = 0; i < 125; ++i) wi[i] = used[(i * 589) / 125];
             double v1 = 1e-8, v2 = 0;
             for (int i = 0; i < 125; ++i) { v1 += wi[i]; v2 += (double)wi[i] * wi[i]; }

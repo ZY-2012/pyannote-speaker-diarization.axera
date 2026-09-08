@@ -73,18 +73,6 @@ bash compile.sh                     # 8 个 axmodel（需 Pulsar2 Docker）
 详见 `model_convert/` 各脚本注释与 `README.md`（本目录上级工程的
 `pyannote_community1.AXERA/板端评测记录.md` 记录了全部 NPU 坑）。
 
-## C++ 推理
-
-`cpp/` 提供与 Python 对齐的 C++ 实现（板端实测 C++ vs Python DER 差 0.56%，
-RTF 0.09，OMP 8 线程）。交叉编译工具链下载见 `cpp/download_toolchains.sh`
-（gcc-arm-9.2 + AX650 BSP SDK），或参考 `cpp/README.md`。
-
-## 模型下载
-
-量化模型（axmodel + 参数）与 C++ 可执行文件在
-[HuggingFace: HY-2012/pyannote-speaker-diarization.axera](https://huggingface.co/HY-2012/pyannote-speaker-diarization.axera)，
-本仓库只放源码（模型转换 + Python/C++ 推理）。
-
 ## 参考
 
 - [pyannote-audio](https://github.com/pyannote/pyannote-audio)（MIT）

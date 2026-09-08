@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 
-CHUNK = 64
+CHUNK = 96
 
 
 class BidirLstm:
