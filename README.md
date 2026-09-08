@@ -25,16 +25,18 @@ SPEAKER your_audio 1   6.865  15.627 <NA> <NA> SPEAKER_00 <NA> <NA>
 | `--num-speakers` | 0 | 0=自动估计；已知人数可固定（如 4） |
 | `--threshold`/`--fa`/`--fb` | 0.6/0.07/0.8 | PLDA 聚类参数，一般无需改 |
 
-## 指标（板端实测，帧级 DER）
+## 指标（帧级 DER，板端实测）
 
-| 数据集 | 板端量化 | GPU FP32 | 3D-Speaker+overlap(GPU) |
+| 数据集 | community-1 板端 | 3D-Speaker 板端¹ | community-1 GPU FP32 |
 |---|---|---|---|
-| AMI dev12（no collar） | **20.06%** | 20.08% | 22.25% |
-| AliMeeting eval（±0.125s） | 20.88% | 18.84% | 18.51% |
-| AliMeeting eval（±0.25s） | 17.26% | 15.16% | 13.99% |
+| AMI dev12（no collar） | **20.06%** | 29.72% | 20.08% |
+| AliMeeting eval（±0.125s） | **20.88%** | 29.34% | 18.84% |
+| AliMeeting eval（±0.25s） | **17.26%** | 24.36% | 15.16% |
 
-- RTF（纯推理，不含模型加载）：**0.16**（step=2s）/ 0.44（step=1s）
-- 单场 30 分钟会议：约 5 分钟（step=2s）
+¹ 3D-Speaker 板端 = FSMN VAD + CAM++ + 谱聚类量化管线（demo 分割部分），RTF 0.046。
+
+- RTF（纯推理，不含模型加载）：**0.084**（C++ 8 线程）/ 0.16（Python），step=2s；
+  step=2.5s 再快约 20%（板端 +0~1.5pp）
 - 完整评测与量化细节见 `板端评测记录.md`；对比分析见
   `../pyannote_community1_vs_3D-Speaker_对比报告.md`
 
