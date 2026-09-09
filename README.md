@@ -33,6 +33,7 @@
 │   └── compile.sh                 # 一键编译 8 个 axmodel
 ├── [python/](python/)             # 板端 Python 推理（community1_sdk + example.py）
 ├── [cpp/](cpp/)                   # C++ 推理源码（见 cpp/README.md）
+├── [benchmark/](benchmark/)       # 测试集下载/参考处理/评分脚本
 ├── [scripts/](scripts/)           # 主机参数导出（npz → bin，C++ SDK 用）
 ├── [samples/](samples/)           # 演示音频（2 人会议 120 s）
 └── run_ax650.sh                   # 一键运行（板端，需先下载 HF 模型）
@@ -105,6 +106,8 @@ export LD_LIBRARY_PATH=/soc/lib:${LD_LIBRARY_PATH:-}
 | VoxConverse test（±0.125 s） | **9.11%** | 9.27% | 8.49% |
 
 ¹ 3D-Speaker 板端 = FSMN VAD + CAM++ + 谱聚类量化管线，RTF 0.046~0.047。
+
+测试集下载、参考处理与评分脚本见 [benchmark/README.md](benchmark/README.md)。
 
 ## 参考
 
