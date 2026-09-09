@@ -13,6 +13,22 @@ README 指标表所用三个测试集的下载、参考处理与评分方法。�
 
 完整评测 = 下载数据 → 重建参考（一次性）→ 板端推理出 RTTM → 评分。
 
+### 参考重建脚本用法
+
+```bash
+# 查看参数
+python benchmark/prep_ami_ref.py --help
+python benchmark/prep_ali_ref.py --help
+
+# AMI：--annot 指向官方 NXT words 标注目录，--out 输出参考 RTTM 目录
+#   标注文件命名 {meeting}.{spk}.words.xml（如 ES2004a.A.words.xml）
+python benchmark/prep_ami_ref.py --annot /path/to/annot_dir/words --out ref_dir --gap 0.3
+
+# AliMeeting：--tg 指向 Eval_Ali_TextGrid 解压目录，--out 输出参考 RTTM 目录
+#   TextGrid 命名 R8001_M8004.TextGrid（不带麦克风阵列后缀）
+python benchmark/prep_ali_ref.py --tg /path/to/Eval_Ali_TextGrid --out ref_dir
+```
+
 ## 1. AMI dev（16 场 Mix-Headset）
 
 | 项 | 说明 |
