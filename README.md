@@ -32,6 +32,7 @@ SPEAKER your_audio 1   6.865  15.627 <NA> <NA> SPEAKER_00 <NA> <NA>
 | AMI dev12（no collar） | **20.06%** | 29.72% | 20.08% |
 | AliMeeting eval（±0.125s） | **20.88%** | 29.34% | 18.84% |
 | AliMeeting eval（±0.25s） | **17.26%** | 24.36% | 15.16% |
+| VoxConverse test（±0.125s） | **9.11%** | 9.27% | 8.49% |
 
 ¹ 3D-Speaker 板端 = FSMN VAD + CAM++ + 谱聚类量化管线（demo 分割部分），RTF 0.046。
 
