@@ -1,80 +1,109 @@
-# pyannote community-1 Speaker Diarization on AX650N
+# pyannote-speaker-diarization.AXERA
 
-`pyannote/speaker-diarization-community-1`（cc-by-4.0）在 AX650N 上的量化部署，
-一句话把会议音频变成说话人分段（RTTM）。
+`pyannote/speaker-diarization-community-1`（cc-by-4.0）说话人日志模型在 AX650N 上的部署工程：
+输入 16 kHz 单声道会议音频，输出 RTTM 说话人时序标签。
 
-## 快速开始（板端）
+- [x] Python 板端推理（axengine）
+- [x] C++ 板端推理（RTF 0.057）
+- [x] 模型转换（导出 → 对分 → 校准 → Pulsar2 量化）
+
+量化模型与 C++ 可执行文件发布在 HuggingFace：
+[HY-2012/pyannote-speaker-diarization.axera](https://huggingface.co/HY-2012/pyannote-speaker-diarization.axera)，
+本仓库仅含全部代码。
+
+## 支持平台
+
+- AX650N（NPU3）
+
+## 模型
+
+- 模型：`pyannote/speaker-diarization-community-1`（分割 + 嵌入 + PLDA/VBx 聚类，cc-by-4.0）
+- 量化：8 个 axmodel，U16 激活 / S8 权重；InstanceNorm / TSTP 池化在 U16 域数值崩坏 → 主机 FP32
+- 部署架构详见 [板端评测记录.md](板端评测记录.md)
+
+## 目录结构
+
+```
+├── [model_convert/](model_convert/)       # 模型转换（导出 → 校准 → 量化）
+│   ├── export_sincnet_split.py    # 分割前端 3 段 ONNX + 主机参数
+│   ├── export_lstm_cells.py       # 4 层 BiLSTM 96 步 cell
+│   ├── export_models.py           # embedding 卷积栈 + fbank 参数
+│   ├── generate_calibration.py    # 真实会议校准数据
+│   ├── generate_cell_calib.py     # LSTM cell 校准数据
+│   └── compile.sh                 # 一键编译 8 个 axmodel
+├── [python/](python/)             # 板端 Python 推理（community1_sdk + example.py）
+├── [cpp/](cpp/)                   # C++ 推理源码（见 cpp/README.md）
+├── [scripts/](scripts/)           # 主机参数导出（npz → bin，C++ SDK 用）
+├── [samples/](samples/)           # 演示音频（2 人会议 120 s）
+└── run_ax650.sh                   # 一键运行（板端，需先下载 HF 模型）
+```
+
+## 环境
+
+模型转换：
 
 ```bash
-pip install numpy scipy scikit-learn soundfile axengine   # 板端依赖
-bash run_ax650.sh                        # 跑自带样例 samples/sample_meeting.wav
-bash run_ax650.sh your_16k_mono.wav out.rttm
+pip install torch pyannote.audio==4.0.7 onnxruntime
 ```
 
-输出 RTTM 每行一个说话人片段：
+板端推理：
 
+```bash
+pip install numpy scipy scikit-learn soundfile axengine
 ```
-SPEAKER your_audio 1   6.865  15.627 <NA> <NA> SPEAKER_00 <NA> <NA>
+
+C++ 交叉编译工具链（aarch64 gcc 9.2 + AX650N BSP SDK）：见 [cpp/README.md](cpp/README.md)。
+
+## 模型转换（三步）
+
+1. **导出**：`export_sincnet_split.py` + `export_lstm_cells.py` + `export_models.py`（自动对分验证）
+2. **校准**：`generate_calibration.py` + `generate_cell_calib.py`（真实会议数据）+ `pack_calib.sh`
+3. **编译**：`compile.sh`（Pulsar2 Docker，8 个 axmodel）
+
+详见 [model_convert/README.md](model_convert/README.md)。
+
+## 板端部署
+
+### Python 推理
+
+```bash
+# 下载模型（models/ 下 23 个文件，或 hf download）
+pip install -r requirements.txt
+bash run_ax650.sh                    # 自带样例 samples/sample_meeting.wav
+bash run_ax650.sh in.wav out.rttm
 ```
 
-可选参数（环境变量或 example.py 参数）：
+### C++ 推理
 
-| 参数 | 默认 | 说明 |
-|---|---|---|
-| `--step` / `STEP` | 2.0 | 分割滑动步长（秒）。2s 几乎无损（推荐）；2.5s 再快约 20%（板端 +0~1.5pp） |
-| `--num-speakers` | 0 | 0=自动估计；已知人数可固定（如 4） |
-| `--threshold`/`--fa`/`--fb` | 0.6/0.07/0.8 | PLDA 聚类参数，一般无需改 |
+```bash
+# 本地交叉编译（见 cpp/README.md），产物 community1_diar
+bash cpp/download_toolchains.sh
+bash cpp/build_ax650.sh
 
-## 指标（帧级 DER，板端实测）
+# 板端运行（直接用 HuggingFace 仓库 bin/community1_diar_ax650）
+export LD_LIBRARY_PATH=/soc/lib:${LD_LIBRARY_PATH:-}
+./community1_diar --model-dir models --wav in.wav --out out.rttm --step 2.0
+```
 
-| 数据集 | community-1 板端 | 3D-Speaker 板端¹ | community-1 GPU FP32 |
+## RTF（AX650N 实测，samples/sample_meeting.wav 120 s）
+
+| 推理路径 | 耗时 | RTF |
+|------|------|------|
+| C++（8 线程，step=2.0） | 6.9 s | 0.057 |
+| Python（step=2.0） | 19 s | 0.16 |
+
+> RTF = 推理耗时 / 音频时长（不含模型加载）；step=2.5 再快约 20%（+0~1.5 pp）。
+
+## 指标（帧级 DER）
+
+| 数据集 | community-1 板端 | 3D-Speaker 板端¹ | community-1 GPU |
 |---|---|---|---|
 | AMI dev12（no collar） | **20.06%** | 29.72% | 20.08% |
-| AliMeeting eval（±0.125s） | **20.88%** | 29.34% | 18.84% |
-| AliMeeting eval（±0.25s） | **17.26%** | 24.36% | 15.16% |
-| VoxConverse test（±0.125s） | **9.11%** | 9.27% | 8.49% |
+| AliMeeting eval（±0.125 s） | **20.88%** | 29.34% | 18.84% |
+| AliMeeting eval（±0.25 s） | **17.26%** | 24.36% | 15.16% |
+| VoxConverse test（±0.125 s） | **9.11%** | 9.27% | 8.49% |
 
-¹ 3D-Speaker 板端 = FSMN VAD + CAM++ + 谱聚类量化管线（demo 分割部分），RTF 0.046。
-
-- RTF（纯推理，不含模型加载）：**0.084**（C++ 8 线程）/ 0.16（Python），step=2s；
-  step=2.5s 再快约 20%（板端 +0~1.5pp）
-- 完整评测与量化细节见 `板端评测记录.md`；对比分析见
-  `../pyannote_community1_vs_3D-Speaker_对比报告.md`
-
-## 目录
-
-```
-models/         8 个 axmodel + 8 个主机侧参数 npz（model_meta.json 有清单）
-python/         板端 SDK（community1_sdk/ + example.py）
-model_convert/  可复现的导出/量化脚本（Pulsar2）
-samples/        自带测试音频（2 人会议 120s，AliMeeting 片段）
-run_ax650.sh    一键推理入口
-```
-
-## 部署架构（哪些在 NPU、哪些在 CPU）
-
-| 组件 | 载体 | 原因 |
-|---|---|---|
-| sincnet 首层 conv | NPU（主机 im2col + MatMul） | 单通道 Conv NPU 算错 |
-| sincnet 后续 conv/maxpool | NPU ×2 模型 | — |
-| InstanceNorm / TSTP 池化 | 主机 FP32 | U16 量化域数值崩坏 |
-| 4 层 BiLSTM | NPU ×4（64 步展开 cell，FP32 状态跨块） | Pulsar2 不支持 LSTM 算子 |
-| FFN / powerset 解码 | 主机 | 小矩阵 |
-| fbank / PLDA / AHC / VBx | 主机 numpy/scipy | 纯算法 |
-
-## 模型转换复现
-
-```bash
-cd model_convert
-python export_sincnet_split.py      # 分割前端 3 段 + host_frontend.npz
-python export_lstm_cells.py         # LSTM cell ×4
-python export_models.py             # embedding 卷积栈 + host_emb_tail.npz + fbank 参数
-python generate_calibration.py && bash pack_calib.sh
-bash compile.sh                     # 8 个 axmodel（需 Pulsar2 Docker）
-```
-
-详见 `model_convert/` 各脚本注释与 `README.md`（本目录上级工程的
-`pyannote_community1.AXERA/板端评测记录.md` 记录了全部 NPU 坑）。
+¹ 3D-Speaker 板端 = FSMN VAD + CAM++ + 谱聚类量化管线，RTF 0.046~0.047。
 
 ## 参考
 
