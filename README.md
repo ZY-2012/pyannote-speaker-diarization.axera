@@ -40,13 +40,14 @@
 
 ## 环境
 
-模型转换：
-
 ```bash
-pip install torch pyannote.audio==4.0.7 onnxruntime
+conda create -n community1-diar python=3.12
+conda activate community1-diar
+cd pyannote-speaker-diarization.AXERA
+pip install -r requirements.txt
 ```
 
-板端推理：
+板端推理另需：
 
 ```bash
 pip install numpy scipy scikit-learn soundfile axengine

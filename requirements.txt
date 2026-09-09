@@ -1,11 +1,15 @@
-# 板端推理（AX650N）
+# 模型转换/验证依赖 (python3.10 / 3.12 验证)
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0+cpu
+torchaudio==2.6.0
+pyannote.audio==4.0.7
 numpy
 scipy
 scikit-learn
 soundfile
-axengine
-
-# 模型转换（可选）
-torch
+onnx
 onnxruntime
-pyannote.audio
+onnxsim
+pandas
+# 板端推理（板子上装）：numpy scipy scikit-learn soundfile axengine
